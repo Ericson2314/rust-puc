@@ -74,9 +74,55 @@ pub struct HashMap<K,V> {
     priv map: HAMT<K,V>
 }
 
+impl<K:Hash + Eq,V> Container for HashMap<K, V> {
+    /// Return the number of elements in the map
+    fn len(&self) -> uint { self.size }
+}
+
+impl<K:Hash + Eq,V> Map<K, V> for HashMap<K, V> {
+    /// Return a reference to the value corresponding to the key
+    fn find<'a>(&'a self, k: &K) -> Option<&'a V> {
+        match self.bucket_for_key(k) {
+            FoundEntry(idx) => Some(self.value_for_bucket(idx)),
+            TableFull | FoundHole(_) => None,
+        }
+    }
+}
+
 
 
 #[allow(missing_doc)]
 pub struct HashSet<T> {
     priv map: HashMap<T, ()>
+}
+
+impl<T:Hash + Eq> Eq for HashSet<T> {
+    fn eq(&self, other: &HashSet<T>) -> bool { self.map == other.map }
+    fn ne(&self, other: &HashSet<T>) -> bool { self.map != other.map }
+}
+
+impl<T:Hash + Eq> Container for HashSet<T> {
+    /// Return the number of elements in the set
+    fn len(&self) -> uint { self.map.len() }
+}
+
+impl<T:Hash + Eq> Set<T> for HashSet<T> {
+    /// Return true if the set contains a value
+    fn contains(&self, value: &T) -> bool { self.map.contains_key(value) }
+
+    /// Return true if the set has no elements in common with `other`.
+    /// This is equivalent to checking for an empty intersection.
+    fn is_disjoint(&self, other: &HashSet<T>) -> bool {
+        self.iter().all(|v| !other.contains(v))
+    }
+
+    /// Return true if the set is a subset of another
+    fn is_subset(&self, other: &HashSet<T>) -> bool {
+        self.iter().all(|v| other.contains(v))
+    }
+
+    /// Return true if the set is a superset of another
+    fn is_superset(&self, other: &HashSet<T>) -> bool {
+        other.is_subset(self)
+    }
 }
