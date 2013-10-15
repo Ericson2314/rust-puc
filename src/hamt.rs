@@ -11,11 +11,11 @@ use std::hash::Hash;
 use std::option::{None, Option, Some};
 use std::uint;
 
-// ~ because one should always alias the node owning the array, not the array itself.
+// arrays are deceptively fixed size to avoid boxing. Always allocate memory and then cast to HAMT<T> !
 
 enum HAMT<K,V> {
-    Buckets (u64, ~[(K,V)] ),
-    Node (uint, ~[@HAMT<K,V>] )
+    Buckets (u64, [(K,V), ..uint::max_value] ),
+    Branches (uint, [@HAMT<K,V>, ..uint::bits] )
 }
 
 
